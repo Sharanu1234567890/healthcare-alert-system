@@ -1,0 +1,10 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
+app:
+  kafka:
+    topic: patient-vital-stream
+
+server:
+  port: 8081
