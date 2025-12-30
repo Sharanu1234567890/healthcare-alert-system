@@ -1,10 +1,14 @@
-spring:
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
-
-app:
-  kafka:
-    topic: patient-vital-stream
-
 server:
   port: 8081
+
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  datasource:
+    url: jdbc:mysql://mysql:3306/healthcare_db
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver

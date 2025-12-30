@@ -1,9 +1,8 @@
 package com.healthcare.device_ingestion_service.controller;
 
-//package com.healthcare.ingestion.controller;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
+import com.healthcare.device_ingestion_service.entity.PatientVital;
+import com.healthcare.device_ingestion_service.repository.PatientVitalRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -11,24 +10,25 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/ingest")
+@RequestMapping("/vitals")
 public class VitalController {
 
-    private final KafkaTemplate<String, String> kafka;
-    private final String topic;
-    private final ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private PatientVitalRepository repository;
 
-    public VitalController(KafkaTemplate<String, String> kafka,
-                           @Value("${app.kafka.topic:patient-vital-stream}") String topic) {
-        this.kafka = kafka;
-        this.topic = topic;
-    }
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
 
-    @PostMapping("/vitals")
-    public ResponseEntity<?> postVitals(@RequestBody Map<String, Object> payload) throws Exception {
-        String key = payload.getOrDefault("patientId", "unknown").toString();
-        String json = mapper.writeValueAsString(payload);
-        kafka.send(topic, key, json);
-        return ResponseEntity.accepted().body(Map.of("status", "sent"));
+    @PostMapping
+    public ResponseEntity<?> receiveVital(@RequestBody Map<String, Object> payload) {
+        PatientVital vital = new PatientVital();
+        vital.setPatientId((String) payload.get("patientId"));
+        vital.setHeartRate((Integer) payload.get("heartRate"));
+        vital.setSpo2((Integer) payload.get("spo2"));
+        vital.setBp((Integer) payload.get("bp"));
+        repository.save(vital);
+
+        kafkaTemplate.send("patient-vital-stream", payload.get("patientId").toString(), payload.toString());
+        return ResponseEntity.ok("Received");
     }
 }
